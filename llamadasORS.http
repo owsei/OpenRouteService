@@ -1,0 +1,125 @@
+
+### OPENROUTE FUNCIONANDO
+curl http://localhost:8080/ors/v2/health
+
+###
+curl http://localhost:8080/ors/v2/status
+
+### OPENROUTE ROUTING 
+
+curl -X POST \
+  'http://localhost:8080/ors/v2/directions/cycling-regular/geojson' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "coordinates": [
+      [-1.590358,42.807955],
+      [-1.601094,42.813417]
+    ]
+  }'
+
+### OPENROUTE ROUTING LOCALHOST 8082
+curl -X POST "http://localhost:8080/ors/v2/directions/cycling-regular/geojson"
+-H 'Content-Type: application/json' \
+  -d '{
+    "coordinates": [
+      [-1.590358,42.807955],
+      [-1.601094,42.813417]
+    ]
+  }'
+
+
+#### custom model for cycling-regular
+curl -X POST "http://localhost:8080/ors/v2/directions/cycling-regular/geojson"
+-H 'Content-Type: application/json' \
+  -d '{
+        "coordinates": [
+                        [-1.590358, 42.807955],
+                        [-1.601094, 42.813417]
+                    ],
+
+        "preference": "recommended",
+        "elevation": true,
+        "instructions": true,
+        "language": "es",
+        "extra_info": [
+            "surface",
+            "waytype",
+            "suitability",
+            "steepness"
+        ],
+        "options": {
+            "avoid_features": [
+                "steps"
+            ]
+        },
+        "custom_model": {
+            "priority": [
+              // Máxima prioridad a vías clasificadas como cycleway
+              {
+                  "if": "road_class == CYCLEWAY",
+                  "multiply_by": 1.0
+              },
+
+              // Penalizar muchísimo cualquier vía que NO pertenezca
+              // a una red ciclista
+              {
+                  "if": "bike_network == MISSING",
+                  "multiply_by": 0.25
+              },
+
+              // Redes ciclistas locales
+              {
+                  "if": "bike_network == LOCAL",
+                  "multiply_by": 1.0
+              },
+
+              // Redes ciclistas regionales
+              {
+                  "if": "bike_network == REGIONAL",
+                  "multiply_by": 1.0
+              },
+
+              // Redes ciclistas nacionales
+              {
+                  "if": "bike_network == NATIONAL",
+                  "multiply_by": 1.0
+              },
+
+              // Redes ciclistas internacionales
+              {
+                  "if": "bike_network == INTERNATIONAL",
+                  "multiply_by": 1.0
+              },
+
+              // Penalizar carreteras principales
+              {
+                  "if": "road_class == PRIMARY",
+                  "multiply_by": 0.15
+              },
+
+              {
+                  "if": "road_class == SECONDARY",
+                  "multiply_by": 0.30
+              },
+
+              {
+                  "if": "road_class == TRUNK",
+                  "multiply_by": 0.05
+              },
+
+              {
+                  "if": "road_class == MOTORWAY",
+                  "multiply_by": 0
+              },
+
+              // Evitar tramos donde haya que bajarse de la bici
+              {
+                  "if": "get_off_bike",
+                  "multiply_by": 0
+              }
+          ],
+              // Valor bajo = estamos dispuestos a hacer desvíos
+              // para encontrar mejores vías
+          "distance_influence": 10
+      }
+  }'

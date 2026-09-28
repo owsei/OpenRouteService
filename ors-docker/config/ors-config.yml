@@ -3,7 +3,6 @@ ors:
     profile_default:
       build:
         source_file: /home/ors/files/navarra.osm.pbf
-
       graph_path: /home/ors/graphs
 
     profiles:
@@ -11,6 +10,11 @@ ors:
       #   enabled: true
       cycling-regular:
         enabled: true
+        build:
+          source_file: /home/ors/files/navarra.osm.pbf
+          graph_path: /home/ors/graphs
+          encoder_options:
+            enable_custom_models: true
       # cycling-mountain:
       #   enabled: true
       # cycling-road:
@@ -22,4 +26,5 @@ ors:
       #   enabled: true
       # foot-hiking:
       #   enabled: true
+  
       
