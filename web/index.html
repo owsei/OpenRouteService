@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Display a map</title>
+    <meta property="og:description" content="Initialize a map in an HTML element with MapLibre GL JS." />
+    <meta property="og:category" content="Getting Started" />
+    <meta property="og:order" content="1" />
+    <meta property="og:created" content="2025-06-25" />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.css' />
+    <!-- BOOTSTRAP CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <!-- BOOTSTRAP JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.20.1/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@5.20.1/dist/maplibre-gl.js'></script>
+
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        .map-container { 
+            width: 100%; 
+            height: 700px; 
+            align-items: center;
+        }
+
+    </style>
+</head>
+<body>
+<!-- <h1>Welcome to OpenRouteService over Maplibre</h1> -->
+
+<center>
+    <div class="container-fluid">
+        <div class="row col-12 ">
+            <h3>Welcome to OpenRouteService over Maplibre</h3>
+            <h4>Busqueda de rutas de biciletas</h4>
+        </div>
+        <div class="row col-12 text-start">
+            <div class="col-6 text-start">
+                <div id="map" class="map-container"></div>
+            </div>
+            <div id="route-info" class="col-6 text-start" style="background-color: beige;">
+                <h4>Route Information</h4>
+                <h4>Route JSON</h4>
+                <input class="text-input" type="text" id="endpoint-url" placeholder="Ruta EndPoint OpenReouteService" value='http://localhost:8080'>
+                <p>Details about the selected route will appear here.</p>
+                <label for="route-start">Start Coordinates:</label>
+                <br>
+                <label for="route-start">Latitud</label>
+                <input class="text-input" type="text" id="lat" placeholder="Start coordinates" value="-1.601094">
+                <label for="route-end">Longitud</label>
+                <input class="text-input" type="text" id="lng" placeholder="End coordinates" value="42.813417">
+                <button type="button" id="btnCenterMap" class="btn btn-primary" onclick="centrarMapa()">Centrar Mapa</button>
+                <br>
+                <br>
+                <textarea id="jsonInput" class="form-control font-monospace" rows="15" placeholder='{"nombre":"Juan","edad":30}'></textarea>
+                <div id="jsonFeedback" class="mt-2"></div>
+                
+                <br>
+                    <button type="button" id="btnFormat" class="btn btn-primary">Validar y formatear</button>
+                <br>
+                <input class="btn btn-primary" type="button" value="Calculate Route" id="calculate-route" onclick="CalculateRoute()"></input>
+            </div>
+        </div>
+    </div>
+</center>
+<script >
+   
+    window.endPoint= document.getElementById("endpoint-url").value;
+
+    const textareaJSON = document.getElementById("jsonInput");
+    const feedback = document.getElementById("jsonFeedback");
+    const btnFormat = document.getElementById("btnFormat");
+
+    let consultaBiciPrio = JSON.stringify({
+                    coordinates: [
+                        [-1.590358, 42.807955],
+                        [-1.601094, 42.813417]
+                    ],
+
+                    preference: "recommended",
+
+                    elevation: true,
+                    instructions: true,
+                    language: "es",
+
+                    extra_info: [
+                        "surface",
+                        "waytype",
+                        "suitability",
+                        "steepness"
+                    ],
+
+                    options: {
+                        avoid_features: [
+                            "steps"
+                        ]
+                    },
+                    custom_model: {
+                        priority: [
+                            // Máxima prioridad a vías clasificadas como cycleway
+                            {
+                                if: "road_class != CYCLEWAY",
+                                multiply_by: 1
+                            },
+
+                            // Penalizar muchísimo cualquier vía que NO pertenezca
+                            // a una red ciclista
+                            {
+                                if: "bike_network == MISSING",
+                                multiply_by: 0.25
+                            },
+
+                            // Redes ciclistas locales
+                            {
+                                if: "bike_network == LOCAL",
+                                multiply_by: 1.0
+                            },
+
+                            // Redes ciclistas regionales
+                            {
+                                if: "bike_network == REGIONAL",
+                                multiply_by: 1.0
+                            },
+
+                            // Redes ciclistas nacionales
+                            {
+                                if: "bike_network == NATIONAL",
+                                multiply_by: 1.0
+                            },
+
+                            // Redes ciclistas internacionales
+                            {
+                                if: "bike_network == INTERNATIONAL",
+                                multiply_by: 1.0
+                            },
+
+                            // Penalizar carreteras principales
+                            {
+                                if: "road_class == PRIMARY",
+                                multiply_by: 0
+                            },
+
+                            {
+                                if: "road_class == SECONDARY",
+                                multiply_by: 0
+                            },
+
+                            {
+                                if: "road_class == TRUNK",
+                                multiply_by: 0.05
+                            },
+
+                            {
+                                if: "road_class == MOTORWAY",
+                                multiply_by: 0
+                            },
+
+                            // Evitar tramos donde haya que bajarse de la bici
+                            {
+                                if: "get_off_bike",
+                                multiply_by: 0
+                            }
+                        ],
+                            // Valor bajo = estamos dispuestos a hacer desvíos
+                            // para encontrar mejores vías
+                        distance_influence: 100
+                    }
+                });
+
+    console.log(consultaBiciPrio);
+    textareaJSON.value= consultaBiciPrio;
+
+    function centrarMapa() {
+        const lat=document.getElementById("lat").value;
+        const  lng=document.getElementById("lng").value;
+        const map = new maplibregl.Map({
+            container: 'map', // container id
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            center: [lat,lng],
+            zoom: 15
+        });
+    }
+
+    function validarYFormatearJSON() {
+        const texto = textareaJSON.value.trim();
+
+        // Comprobar si está vacío
+        if (texto === "") {
+            textareaJSON.classList.remove("is-valid");
+            textareaJSON.classList.add("is-invalid");
+            feedback.innerHTML = `
+                <span class="text-danger">
+                    Introduce un JSON.
+                </span>
+            `;
+            return;
+        }
+        try {
+            // Intentamos convertir el texto a JSON
+            const json = JSON.parse(texto);
+            // Lo volvemos a convertir a texto,
+            // pero esta vez con indentación
+            textareaJSON.value = JSON.stringify(json, null, 2);
+            // Bootstrap: indicar que es válido
+            textareaJSON.classList.remove("is-invalid");
+            textareaJSON.classList.add("is-valid");
+            feedback.innerHTML = `
+                <span class="text-success">
+                    ✓ JSON válido
+                </span>
+            `;
+        } catch (error) {
+        // Bootstrap: indicar que hay un error
+        textareaJSON.classList.remove("is-valid");
+        textareaJSON.classList.add("is-invalid");
+        feedback.innerHTML = `
+            <span class="text-danger">
+                ✕ JSON inválido: ${escapeHtml(error.message)}
+            </span>
+        `;
+        }
+    }
+
+    btnFormat.addEventListener("click", validarYFormatearJSON);
+
+    textareaJSON.addEventListener("paste", function () {
+        // Esperamos a que el navegador haya pegado el texto
+        setTimeout(() => {
+            validarYFormatearJSON();
+        }, 0);
+    });
+
+    function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    const map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        // center: [-1.652673,42.805925],
+        center: [-1.595489,42.811076],
+        zoom: 15
+    });
+
+
+    // CREACION DE RUTAS A MANO QUE SALEN AL PRINCIPIO DE LA APLIACION
+    async function obtenerRuta() {
+        try {
+            const response = await fetch( window.endPoint+"/ors/v2/directions/cycling-regular/geojson",
+            {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                coordinates: [
+                        [-1.590358, 42.807955],
+                        [-1.601094, 42.813417]
+                    ],
+                "preference": "recommended",
+                "language": "es",
+                "units": "m",
+                "elevation": true,
+                "instructions": true,
+                "extra_info": [
+                    "surface",
+                    "waytype",
+                    "steepness",
+                    "suitability"
+                ],
+                "options": {
+                        "avoid_features": [
+                            "steps",
+                            "ferries"
+                        ],
+                        profile_params: {
+                            weightings: {
+                                    steepness_difficulty: 1 //esto es para pendientes
+                                }
+                            }
+                    }
+                })
+            }
+            );
+
+            if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+            }
+
+            const geojsonData = await response.json();
+            console.log(geojsonData);
+
+            map.addSource('ruta-source', {
+                type: 'geojson',
+                data: geojsonData // Pasamos los datos recibidos de la API
+            });
+
+            map.addLayer({
+                id: 'capa-ruta',
+                type: 'line',
+                source: 'ruta-source',
+                paint: {
+                    'line-width': 3,
+                    'line-color': '#0748a3', // Color por defecto antes de aplicar la interpolación
+                }
+            });
+
+
+        } catch (error) {
+            console.error("Error obteniendo la ruta:", error);
+        }
+    }
+
+    async function priorizarBici() {
+        // Aquí se puede implementar la lógica para priorizar rutas para bicicletas
+
+        console.log("Priorizar rutas para bicicletas activado");
+        const response = await fetch( window.endPoint+"/ors/v2/directions/cycling-regular/geojson",
+            {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: consultaBiciPrio
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`ORS ${response.status}: ${error}`);
+        }
+
+        const routeBici = await response.json();
+
+        console.log(routeBici);
+
+        map.addSource('ruta-bici', {
+            type: 'geojson',
+            data: routeBici // Pasamos los datos recibidos de la API
+        });
+
+        map.addLayer({
+            id: 'capa-bici',
+            type: 'line',
+            source: 'ruta-bici',
+            paint: {
+                'line-width': 5,
+                'line-color': '#d10a43', // Color por defecto antes de aplicar la interpolación
+            }
+        });
+
+
+    }
+
+    async function rutaMinima() {
+        const response = await fetch( window.endPoint+"/ors/v2/directions/cycling-regular/geojson",
+            {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                coordinates: [
+                    [-1.590358, 42.807955],
+                    [-1.601094, 42.813417]
+                ],
+
+                preference: "recommended",
+
+                custom_model: {
+                    priority: [
+                    {
+                        if: "get_off_bike",
+                        multiply_by: 0
+                    }
+                    ]
+                }
+                })
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `ORS ${response.status}: ${await response.text()}`
+            );
+        }
+
+        const geojsonData = await response.json();
+        console.log(geojsonData);
+
+        map.addSource('ruta-minima-source', {
+            type: 'geojson',
+            data: geojsonData // Pasamos los datos recibidos de la API
+        });
+
+        map.addLayer({
+            id: 'capa-ruta-minima',
+            type: 'line',
+            source: 'ruta-minima-source',
+            paint: {
+                'line-width': 2,
+                'line-color': '#09942c', // Color por defecto antes de aplicar la interpolación
+            }
+        });
+        
+    }
+
+    async function CalculateRoute() {
+        console.log("CalculateRoute function called.");
+        const routePreferences = document.getElementById("route-preferences").value;
+        obtenerRutaPreferences(routePreferences);
+
+        const textareaJSON = document.getElementById("jsonInput");
+
+
+
+
+    }
+
+    async function obtenerRutaPreferences(preferences) {
+        try {
+            const response = await fetch(
+            "http://localhost:8080/ors/v2/directions/cycling-regular/geojson",
+            {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                coordinates: [
+                        [-1.590358, 42.807955],
+                        [-1.601094, 42.813417]
+                    ],
+                "preference": "recommended",
+                "language": "es",
+                "units": "m",
+                "elevation": true,
+                "instructions": true,
+                "extra_info": [
+                    "surface",
+                    "waytype",
+                    "steepness",
+                    "suitability"
+                ],
+                "options": {
+                        "avoid_features": [
+                            "steps",
+                            "ferries"
+                        ],
+                        profile_params: {
+                            weightings: {
+                                    steepness_difficulty: 1 //esto es para pendientes
+                                }
+                            }
+                    }
+                })
+            }
+            );
+
+            if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+            }
+
+            const geojsonData = await response.json();
+            console.log(geojsonData);
+
+            map.addSource('ruta-source', {
+                type: 'geojson',
+                data: geojsonData // Pasamos los datos recibidos de la API
+            });
+
+            map.addLayer({
+                id: 'capa-ruta',
+                type: 'line',
+                source: 'ruta-source',
+                paint: {
+                    'line-width': 3,
+                    'line-color': '#0748a3', // Color por defecto antes de aplicar la interpolación
+                }
+            });
+
+
+        } catch (error) {
+            console.error("Error obteniendo la ruta:", error);
+        }
+    }    
+
+    // rellenarPreferencias();
+    obtenerRuta();
+    priorizarBici();
+    rutaMinima();
+    
+
+</script>
+</body>
+</html>
