@@ -1,0 +1,25 @@
+ors:
+  engine:
+    profile_default:
+      build:
+        source_file: /home/ors/files/navarra.osm.pbf
+
+      graph_path: /home/ors/graphs
+
+    profiles:
+      # driving-car:
+      #   enabled: true
+      cycling-regular:
+        enabled: true
+      # cycling-mountain:
+      #   enabled: true
+      # cycling-road:
+      #   enabled: true
+      # cycling-electric:
+      #   enabled: true
+      
+      # foot-walking:
+      #   enabled: true
+      # foot-hiking:
+      #   enabled: true
+      

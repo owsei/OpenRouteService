@@ -1,0 +1,18 @@
+
+### OPENROUTE FUNCIONANDO
+curl http://localhost:8080/ors/v2/health
+
+###
+curl http://localhost:8080/ors/v2/status
+
+### OPENROUTE ROUTING 
+
+curl -X POST \
+  'http://localhost:8080/ors/v2/directions/cycling-regular/geojson' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "coordinates": [
+      [-1.590358,42.807955],
+      [-1.601094,42.813417]
+    ]
+  }'
