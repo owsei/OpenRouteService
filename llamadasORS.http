@@ -123,3 +123,8 @@ curl -X POST "http://localhost:8080/ors/v2/directions/cycling-regular/geojson"
           "distance_influence": 10
       }
   }'
+
+
+#### 
+
+curl -X GET https://localhost:8080/elevation/point?geometry=13.349762,38.11295

@@ -44,7 +44,7 @@
             <div id="route-info" class="col-6 text-start" style="background-color: beige;">
                 <h4>Route Information</h4>
                 <h4>Route JSON</h4>
-                <input class="text-input" type="text" id="endpoint-url" placeholder="Ruta EndPoint OpenReouteService" value='http://localhost:8080'>
+                <input class="text-input col-10" type="text" id="endpoint-url" placeholder="Ruta EndPoint OpenReouteService" value='http://localhost:8080/ors/v2/directions/cycling-regular/geojson'>
                 <p>Details about the selected route will appear here.</p>
                 <label for="route-start">Start Coordinates:</label>
                 <br>
@@ -76,27 +76,30 @@
 
     let consultaBiciPrio = JSON.stringify({
                     coordinates: [
-                        [-1.590358, 42.807955],
-                        [-1.601094, 42.813417]
+                        [
+                            -1.642821,
+                            42.817417
+                        ],
+                        [
+                            -1.663802,
+                            42.854063
+                        ]
                     ],
-
                     preference: "recommended",
-
                     elevation: true,
                     instructions: true,
                     language: "es",
-
                     extra_info: [
                         "surface",
                         "waytype",
                         "suitability",
                         "steepness"
                     ],
-
                     options: {
-                        avoid_features: [
-                            "steps"
-                        ]
+                        "avoid_features": [
+                            "steps",
+                            "ferries"
+                        ],
                     },
                     custom_model: {
                         priority: [
@@ -157,7 +160,10 @@
                                 if: "road_class == MOTORWAY",
                                 multiply_by: 0
                             },
-
+                            {
+                                "if": "road_class == TRACK",
+                                "multiply_by": 0
+                            },
                             // Evitar tramos donde haya que bajarse de la bici
                             {
                                 if: "get_off_bike",
@@ -244,14 +250,14 @@
         style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
         // center: [-1.652673,42.805925],
         center: [-1.595489,42.811076],
-        zoom: 15
+        zoom: 12
     });
 
 
     // CREACION DE RUTAS A MANO QUE SALEN AL PRINCIPIO DE LA APLIACION
     async function obtenerRuta() {
         try {
-            const response = await fetch( window.endPoint+"/ors/v2/directions/cycling-regular/geojson",
+            const response = await fetch( window.endPoint,
             {
                 method: "POST",
                 headers: {
@@ -320,7 +326,7 @@
         // Aquí se puede implementar la lógica para priorizar rutas para bicicletas
 
         console.log("Priorizar rutas para bicicletas activado");
-        const response = await fetch( window.endPoint+"/ors/v2/directions/cycling-regular/geojson",
+        const response = await fetch( window.endPoint,
             {
                 method: "POST",
                 headers: {
@@ -358,7 +364,7 @@
     }
 
     async function rutaMinima() {
-        const response = await fetch( window.endPoint+"/ors/v2/directions/cycling-regular/geojson",
+        const response = await fetch( window.endPoint,
             {
                 method: "POST",
                 headers: {
@@ -367,8 +373,14 @@
 
                 body: JSON.stringify({
                 coordinates: [
-                    [-1.590358, 42.807955],
-                    [-1.601094, 42.813417]
+                    [
+                        -1.642821,
+                        42.817417
+                    ],
+                    [
+                        -1.663802,
+                        42.854063
+                    ]
                 ],
 
                 preference: "recommended",
@@ -409,15 +421,58 @@
             }
         });
         
-    }
+    } 
 
     async function CalculateRoute() {
         console.log("CalculateRoute function called.");
-        const routePreferences = document.getElementById("route-preferences").value;
-        obtenerRutaPreferences(routePreferences);
 
         const textareaJSON = document.getElementById("jsonInput");
+        const response = await fetch( window.endPoint,
+            {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
 
+                body: textareaJSON.value
+            }
+        );
+
+        if (!response.ok) {
+            alert(`ORS ${response.status}: ${await response.text()}`);
+            throw new Error(
+                `ORS ${response.status}: ${await response.text()}`
+            );
+        }
+
+        const geojsonData = await response.json();
+        console.log(geojsonData);
+
+        existe = map.getSource("ruta-personalizada");
+
+        if (!existe){
+             map.addSource('ruta-personalizada', {
+                type: 'geojson',
+                data: geojsonData // Pasamos los datos recibidos de la API
+            });
+
+            map.addLayer({
+                id: 'capa-ruta-personalizada',
+                type: 'line',
+                source: 'ruta-personalizada',
+                paint: {
+                    'line-width': 3,
+                    'line-color': '#09942c', // Color por defecto antes de aplicar la interpolación
+                }
+            });
+        }
+        else {
+            map.getSource('ruta-personalizada').setData(geojsonData);
+            map.getLayer('capa-ruta-personalizada').setPaintProperty('line-color', '#09942c');
+            map.getLayer('capa-ruta-personalizada').setPaintProperty('line-width', 3);
+        }
+
+       
 
 
 

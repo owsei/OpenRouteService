@@ -6,8 +6,13 @@ ors:
       graph_path: /home/ors/graphs
 
     profiles:
-      # driving-car:
-      #   enabled: true
+      driving-car:
+        enabled: true
+        build:
+          source_file: /home/ors/files/navarra.osm.pbf
+          graph_path: /home/ors/graphs
+          encoder_options:
+            enable_custom_models: true
       cycling-regular:
         enabled: true
         build:
@@ -15,16 +20,31 @@ ors:
           graph_path: /home/ors/graphs
           encoder_options:
             enable_custom_models: true
-      # cycling-mountain:
-      #   enabled: true
-      # cycling-road:
-      #   enabled: true
-      # cycling-electric:
-      #   enabled: true
+      cycling-mountain:
+        enabled: true
+        build:
+          source_file: /home/ors/files/navarra.osm.pbf
+          graph_path: /home/ors/graphs
+          encoder_options:
+            enable_custom_models: true
+      cycling-road:
+        enabled: true
+        build:
+          source_file: /home/ors/files/navarra.osm.pbf
+          graph_path: /home/ors/graphs
+          encoder_options:
+            enable_custom_models: true
+      cycling-electric:
+        enabled: true
+        build:
+          source_file: /home/ors/files/navarra.osm.pbf
+          graph_path: /home/ors/graphs
+          encoder_options:
+            enable_custom_models: true
       
-      # foot-walking:
-      #   enabled: true
-      # foot-hiking:
-      #   enabled: true
+      foot-walking:
+        enabled: true
+      foot-hiking:
+        enabled: true
   
       

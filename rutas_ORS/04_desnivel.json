@@ -1,0 +1,31 @@
+{
+"coordinates": [
+    [-1.590358, 42.807955],
+    [-1.601094, 42.813417]
+],
+"preference": "recommended",
+"language": "es",
+"units": "m",
+"elevation": true,
+"instructions": true,
+"extra_info": [
+    "surface",
+    "waytype",
+    "steepness",
+    "suitability"
+],
+"options": {
+        "avoid_features": [
+            "steps",
+            "ferries"
+        ],
+        "profile_params": {
+            "weightings": {
+                    "steepness_difficulty": 1 //esto es para pendientes
+                }
+        }
+    }
+}
+
+
+

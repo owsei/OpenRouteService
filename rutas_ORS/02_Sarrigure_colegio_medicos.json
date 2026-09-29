@@ -1,0 +1,52 @@
+{
+  "coordinates": [
+    [
+      -1.590358,
+      42.807955
+    ],
+    [
+      -1.632067,
+      42.813987
+    ]
+  ],
+  "preference": "recommended",
+  "elevation": true,
+  "instructions": true,
+  "language": "es",
+  "extra_info": [
+    "surface",
+    "waytype",
+    "suitability",
+    "steepness"
+  ],
+  "options": {
+    "avoid_features": [
+      "steps"
+    ]
+  },
+  "custom_model": {
+    "priority": [
+      {
+        "if": "road_class == CYCLEWAY",
+        "multiply_by": 0.5
+      },
+      {
+        "if": "road_class == PRIMARY",
+        "multiply_by": 0
+      },
+      {
+        "if": "road_class == SECONDARY",
+        "multiply_by": 0
+      },
+      {
+        "if": "road_class == TRUNK",
+        "multiply_by": 0.05
+      },
+      {
+        "if": "road_class == MOTORWAY",
+        "multiply_by": 0
+      }
+    ],
+    "distance_influence": 100
+  }
+}
